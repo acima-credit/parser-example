@@ -1,6 +1,7 @@
 from ply import lex
 from ply import yacc
 
+debug = True
 
 # -----------------------------------------------------------------------------
 # calc.py
@@ -35,7 +36,7 @@ def t_error(t):
 
 # Build the lexer
 import ply.lex as lex
-lex.lex(debug=True)
+lex.lex(debug=debug)
 
 # Precedence rules for the arithmetic operators
 precedence = ()
