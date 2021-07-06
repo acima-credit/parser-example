@@ -26,3 +26,7 @@ calc > my_number
 You can toggle debug output (which is on by default) by setting the `debug` value near the top of starter.py.
 
 To escape the console, use ctrl-c.
+
+In the `ply` project, methods beginning with `p_` are given special handling as parsers. They require a [docstring](https://www.python.org/dev/peps/pep-0257/#id17) to document what will be parsed, and python code to handle the incoming parsed token object.
+
+To add a new language feature, consider adding a new `p_*` method and experimenting.
