@@ -11,12 +11,13 @@ debug = True
 
 tokens = (
     'NAME','NUMBER',
-    'EQUALS',
+    'EQUALS', 'PLUS', 
     )
 
 # Tokens
 t_NAME    = r'[a-zA-Z_][a-zA-Z0-9_]*'
 t_EQUALS  = r'='
+t_PLUS    = r'\+'
 
 def t_NUMBER(t):
     r'\d+'
@@ -50,7 +51,6 @@ def p_statement_assign(p):
 
 def p_statement_expr(p):
     'statement : expression'
-    if p[1] == 'q' or p[1] == 'quit': quit()
     print(p[1])
 
 def p_expression_number(p):
@@ -59,11 +59,17 @@ def p_expression_number(p):
 
 def p_expression_name(p):
     'expression : NAME'
+    if p[1] == 'q' or p[1] == 'quit': quit()
     try:
         p[0] = names[p[1]]
     except LookupError:
         print(f"Undefined name {p[1]!r}")
         p[0] = 0
+
+def p_expression_addition(p):
+    'expression : expression PLUS expression'
+    p[0] = p[1] + p[3] 
+	
 
 def p_error(p):
     print(f"Syntax error at {p.value!r}")
