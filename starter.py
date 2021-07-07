@@ -11,13 +11,13 @@ debug = True
 
 tokens = (
     'NAME','NUMBER',
-    'EQUALS', 'PLUS', 
+    'EQUALS', 'MATH',  
     )
 
 # Tokens
 t_NAME    = r'[a-zA-Z_][a-zA-Z0-9_]*'
 t_EQUALS  = r'='
-t_PLUS    = r'\+'
+t_MATH    = r'(\*{2})|([\+\-\*\/\%])'
 
 def t_NUMBER(t):
     r'\d+'
@@ -66,10 +66,9 @@ def p_expression_name(p):
         print(f"Undefined name {p[1]!r}")
         p[0] = 0
 
-def p_expression_addition(p):
-    'expression : expression PLUS expression'
-    p[0] = p[1] + p[3] 
-	
+def p_expression_math(p):
+    'expression : expression MATH expression'
+    p[0] = eval(f'{p[1]}{p[2]}{p[3]}') 	
 
 def p_error(p):
     print(f"Syntax error at {p.value!r}")
