@@ -11,13 +11,14 @@ debug = True
 
 tokens = (
     'NAME','NUMBER',
-    'EQUALS', 'MATH',  
+    'EQUALS', 'MATH', 'ARROW', 
     )
 
 # Tokens
 t_NAME    = r'[a-zA-Z_][a-zA-Z0-9_]*'
 t_EQUALS  = r'='
 t_MATH    = r'(\*{2})|([\+\-\*\/\%])'
+t_ARROW   = r'&'
 
 def t_NUMBER(t):
     r'\d+'
@@ -61,7 +62,11 @@ def p_expression_name(p):
     'expression : NAME'
     if p[1] == 'q' or p[1] == 'quit': quit()
     try:
-        p[0] = names[p[1]]
+        value = names[p[1]]
+        if type(value) is int:
+            p[0] = value
+        elif type(value) is str:
+            p[0] = eval(value) 
     except LookupError:
         print(f"Undefined name {p[1]!r}")
         p[0] = 0
@@ -69,6 +74,10 @@ def p_expression_name(p):
 def p_expression_math(p):
     'expression : expression MATH expression'
     p[0] = eval(f'{p[1]}{p[2]}{p[3]}') 	
+
+def p_lambda(p):
+    'expression : NAME ARROW NUMBER MATH NUMBER'
+    names[p[1]] = f'{p[3]}{p[4]}{p[5]}'
 
 def p_error(p):
     print(f"Syntax error at {p.value!r}")
