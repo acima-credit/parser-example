@@ -9,22 +9,40 @@ debug = True
 # A simple calculator with variables.
 # -----------------------------------------------------------------------------
 
-tokens = (
+keywords = ()
+
+tokens = keywords + (
     'NAME','NUMBER',
-    'EQUALS', 'MATH', 'ARROW', 'LEFT_PAR','RIGHT_PAR'
+    'EQUALS', 'ADD',
+    'SUBTRACT', 'MULTIPLY',
+    'DIVIDE', 'MODULO',
+    'EXPONENT', 'ARROW', 
+    'LEFT_PAR','RIGHT_PAR'
     )
 
 # Tokens
-t_NAME    = r'[a-zA-Z_][a-zA-Z0-9_]*'
-t_EQUALS  = r'='
-t_MATH    = r'(\*{2})|([\+\-\*\/\%](?!>))'
-t_ARROW   = r'->'
-t_LEFT_PAR = r'[(]'
+t_EQUALS    = r'='
+t_ADD       = r'[+]'
+t_SUBTRACT  = r'[-](?!>)'
+t_MULTIPLY  = r'[*]'
+t_DIVIDE    = r'[/]'
+t_MODULO    = r'[%]'
+t_EXPONENT  = r'[\^]'
+t_ARROW     = r'->'
+t_LEFT_PAR  = r'[(]'
 t_RIGHT_PAR = r'[)]'
 
 def t_NUMBER(t):
     r'\d+'
     t.value = int(t.value)
+    return t
+
+def t_NAME(t):
+    r'[a-zA-Z_][a-zA-Z0-9_]*'
+    #print(t.value, t.type)
+    if t.value in keywords:
+        t.type = t.value
+    #print(t)
     return t
 
 # Ignored characters
@@ -43,7 +61,10 @@ import ply.lex as lex
 lex.lex(debug=debug)
 
 # Precedence rules for the arithmetic operators
-precedence = ()
+precedence = (
+    ('left','ADD','SUBTRACT'),
+    ('left','MULTIPLY','DIVIDE'),
+    ('left','EXPONENT','MODULO'))
 
 # dictionary of names (for storing variables)
 names = { }
@@ -73,9 +94,33 @@ def p_expression_name(p):
         print(f"Undefined name {p[1]!r}")
         p[0] = 0
 
-def p_expression_math(p):
-    'expression : expression MATH expression'
-    p[0] = eval(f'{p[1]}{p[2]}{p[3]}') 	
+def p_expression_add(p):
+    'expression : expression ADD expression'
+    p[0] =p[1] + p[3]
+
+def p_expression_subtract(p):
+    'expression : expression SUBTRACT expression'
+    p[0] =p[1] - p[3]
+
+def p_expression_multiply(p):
+    'expression : expression MULTIPLY expression'
+    p[0] =p[1] * p[3]
+
+def p_expression_divide(p):
+    'expression : expression DIVIDE expression'
+    p[0] =p[1] / p[3]
+
+def p_expression_modulo(p):
+    'expression : expression MODULO expression'
+    p[0] =p[1] % p[3]
+
+def p_expression_exponent(p):
+    'expression : expression EXPONENT expression'
+    p[0] =p[1] ** p[3]
+
+def p_expression_parentheses(p):
+    'expression : LEFT_PAR expression RIGHT_PAR'
+    p[0] = p[2]
 
 def p_lambda(p):
     'expression : NAME ARROW expression'
