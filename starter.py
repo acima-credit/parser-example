@@ -82,7 +82,9 @@ class Interpreter:
         elif operation == "number":
             return node[1]
         elif operation == "lookup":
-            return self.variable_value(node[1])
+            return self.get_value(node[1])
+        elif operation == 'function':
+            return self.store_function(node[1], node[2], node[3])
         elif operation == "add":
             return self.add(self.eval(node[1]), self.eval(node[2]))
         elif operation == 'subtract':
@@ -103,9 +105,13 @@ class Interpreter:
     def expression_number(self, number):
         return(number)
 
-    def variable_value(self, name):
+    def get_value(self, name):
         try:
-            return(self.current_scope().names[name])
+            value = self.current_scope().names[name]
+            if type(value) == int:
+                return value
+            else:
+                return self.eval(value)
         except LookupError:
             print(f"Undefined name {name}")
             return None
@@ -116,6 +122,11 @@ class Interpreter:
 
     def current_scope(self):
         return(self.stack[-1])
+
+    def store_function(self, function_name, param_name, expression):
+        scope = Scope()
+        self.current_scope().names[function_name] = expression
+        return function_name
 
     def add(self, x, y):
         return x + y
@@ -168,9 +179,13 @@ def p_expression_parentheses(p):
     'expression : LPAREN expression RPAREN'
     p[0] = ('eval', p[2])
 
-def p_lambda(p):
+def p_function(p):
     'expression : NAME LPAREN NAME RPAREN FUNCTION expression'
-    # names[p[1]] = f'{p[6]}'
+    p[0] = ('function', p[1], p[3], p[6])
+
+# def p_function_call(p):
+#     'expression : NAME LPAREN NUMBER RPAREN'
+#     # apple(5)
 
 def p_expression_addition(p):
     'expression : expression ADDITION expression'
