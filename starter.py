@@ -100,6 +100,8 @@ class Interpreter:
             return self.perform_operation("/", self.eval(node[1]), self.eval(node[2]))
         elif operation == "multiple":
             return self.perform_operation("*", self.eval(node[1]), self.eval(node[2]))
+        elif operation == "function":
+            return self.assign_value(node[1], node[2])
         # elif operation == "binary_operation":
         #     return self.perform_operation(node[1], self.eval(node[2]), self.eval(node[3]))
 
@@ -114,7 +116,13 @@ class Interpreter:
 
     def variable_value(self, name):
         try:
-            return(self.current_scope().names[name])
+            value = self.current_scope().names[name]
+            print(f'dictionary: {type(value)}')
+            
+            if type(value) == int:
+                return(value)
+            else:
+                return self.eval(value)
         except LookupError:
             print(f"Undefined name {name}")
             return None
@@ -139,6 +147,7 @@ class Interpreter:
 
 # dictionary of names (for storing variables)
 names = { }
+
 interpreter = Interpreter()
 
 # def p_statement_function(p):
@@ -167,11 +176,11 @@ def p_expression_number(p):
 
 def p_expression_name(p):
     'expression : NAME'
-    try:
-        if p[1] == 'q' or p[1] == 'quit': quit()
-        p[0] = names[p[1]]
-    except LookupError:
-        print(f"Undefined name {p[1]!r}")
+    # try:
+    if p[1] == 'q' or p[1] == 'quit': quit()
+    p[0] = ('lookup', p[1])
+    # except LookupError:
+        # print(f"Undefined name {p[1]!r}")
 
 def p_error(p):
     print(f"Syntax error at {p.value!r}")
@@ -200,8 +209,8 @@ def p_statement_sub(p):
     p[0] = ("sub", p[1], p[3])
 
 def p_expression_function(p):
-    'expression : function'
-    p[0] = ("function", p[1])
+    'expression : function NAME expression'
+    p[0] = ("function", p[2], p[3])
 
 import ply.yacc as yacc
 yacc.yacc()
