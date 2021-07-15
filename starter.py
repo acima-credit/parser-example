@@ -17,7 +17,8 @@ tokens = keywords + (
     'SUBTRACT', 'MULTIPLY',
     'DIVIDE', 'MODULO',
     'EXPONENT', 'ARROW', 
-    'LEFT_PAR','RIGHT_PAR'
+    'LEFT_PAR','RIGHT_PAR',
+    'FUNCTION'
     )
 
 # Tokens
@@ -31,6 +32,7 @@ t_EXPONENT  = r'[\^]'
 t_ARROW     = r'->'
 t_LEFT_PAR  = r'[(]'
 t_RIGHT_PAR = r'[)]'
+t_FUNCTION  = r'func'
 
 def t_NUMBER(t):
     r'\d+'
@@ -83,7 +85,7 @@ def p_expression_number(p):
 
 def p_expression_name(p):
     'expression : NAME'
-    if p[1] == 'q' or p[1] == 'quit': quit()
+    if p[1] == 'q' or p[1] == 'quit' or p[1] == 'exit': quit()
     try:
         value = names[p[1]]
         if type(value) is int:  # why is this here
@@ -125,6 +127,16 @@ def p_expression_parentheses(p):
 def p_lambda(p):
     'expression : NAME ARROW expression'
     names[p[1]] = f'{p[3]}'
+
+def p_func(p): #func Bar (foo) foo + 10
+    'expression : FUNCTION NAME LEFT_PAR NAME RIGHT_PAR expression'
+    names[p[1]] = f'{p[2]}'
+
+def p_func(p):# Bar(20)    : 30
+    'expression : NAME LEFT_PAR NAME RIGHT_PAR' 
+
+def p_func(p):# Bar()    : 30`
+    'expression : NAME LEFT_PAR RIGHT_PAR' 
 
 def p_error(p):
     print(f"Syntax error at {p.value!r}")
