@@ -18,7 +18,8 @@ tokens = (
     'EXPONENTIATION',
     'MODULO',
     'LPAREN',
-    'RPAREN'
+    'RPAREN',
+    'COMMA'
     )
 
 # Tokens
@@ -33,6 +34,7 @@ t_EXPONENTIATION = r'\^'
 t_MODULO         = r'[%]'
 t_LPAREN         = r'[(]'
 t_RPAREN         = r'[)]'
+t_COMMA          = r'[,]'
 
 def t_NUMBER(t):
     r'-?\d+'
@@ -180,8 +182,25 @@ def p_expression_parentheses(p):
     p[0] = ('eval', p[2])
 
 def p_function(p):
-    'expression : NAME LPAREN NAME RPAREN FUNCTION expression'
+    'expression : NAME LPAREN param_list RPAREN FUNCTION expression'
     p[0] = ('function', p[1], p[3], p[6])
+
+def p_param_list(p):
+    '''
+        param_list : parameter
+                   | parameter COMMA param_list
+                   |
+    '''
+    if len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    elif len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = []
+
+def p_parameter(p):
+    'parameter : NAME'
+    p[0] = p[1]
 
 # def p_function_call(p):
 #     'expression : NAME LPAREN NUMBER RPAREN'
