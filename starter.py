@@ -18,7 +18,8 @@ tokens = keywords + (
     'NAME','NUMBER',
     'EQUALS', 'ADD',
     'SUB', 'MULTIPLE',
-    'DIVISION', 'LPAREN', 'RPAREN'  #, 'FOR', 'TO', 'RUN'
+    'DIVISION', 'LPAREN', 'RPAREN',  #, 'FOR', 'TO', 'RUN'
+    'STARTARGS', 'ENDARGS'
     )
 
 # Tokens
@@ -31,6 +32,8 @@ t_DIVISION = r'/'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_function    = r'function'
+t_STARTARGS = r'\['
+t_ENDARGS = r']'
 # t_FOR = r'for'
 # t_TO  = r'to'
 # t_RUN = r'run'
@@ -75,7 +78,7 @@ class Scope:
         self.names = {}
         self.loop_counter = 0
         self.loop_statements = []
-        
+
 class Interpreter:
     def __init__(self):
         self.stack = []
@@ -91,6 +94,12 @@ class Interpreter:
         elif operation == "number":
             return node[1]
         elif operation == "lookup":
+            # TODO: If we're looking up a function, we're calling it--create a new scope,
+            # get the list of variable names from the definition and the list of
+            # values from the function call, assign those values to their names
+            # IN the new scope, and finally, EVALUATE the function body.
+            #
+            # ...phew
             return self.variable_value(node[1])
         elif operation == "add":
             return self.perform_operation("+", self.eval(node[1]), self.eval(node[2]))
@@ -101,11 +110,12 @@ class Interpreter:
         elif operation == "multiple":
             return self.perform_operation("*", self.eval(node[1]), self.eval(node[2]))
         elif operation == "function":
-            return self.assign_value(node[1], node[2])
+            print(f"Interpreter here, I am assigning your function {node[1]}")
+            print(f"...with variable {node[2]}")
+            # TODO: We need to store the arglist with with name, and/or identify this name as a function
+            return self.assign_value(node[1], node[3])
         # elif operation == "binary_operation":
         #     return self.perform_operation(node[1], self.eval(node[2]), self.eval(node[3]))
-
-
 
     def assign_value(self, name, value):
         self.current_scope().names[name] = value
@@ -118,10 +128,22 @@ class Interpreter:
         try:
             value = self.current_scope().names[name]
             print(f'dictionary: {type(value)}')
-            
+
             if type(value) == int:
                 return(value)
             else:
+                # value is a function
+                # - Create a new scope
+                # - Get the list of arguments from the function definition
+                # (which future us will have stored, right?)
+                # - Get the values passed into this call
+                # - Assign the values to the argument names in our new scope
+                # - eval the function body
+                #
+                # - Also, fun wrinkle: We need our new scope to recognize all
+                # the existing names in our outer scope. Maybe not? This sounds
+                # like a problem for Future Us. Maybe we have no scope leakage
+                # by design and call it a feature.
                 return self.eval(value)
         except LookupError:
             print(f"Undefined name {name}")
@@ -153,9 +175,9 @@ interpreter = Interpreter()
 # def p_statement_function(p):
 #     'statement : DEF '
 #     functions[p[1]] = p[3]
-    
+
 # def p_expression_for(p):
-#     'expression : FOR NUMBER TO NUMBER RUN expression'  
+#     'expression : FOR NUMBER TO NUMBER RUN expression'
 #     for e in range(p[2], p[4]):
 #         print(p[6])
 
@@ -209,8 +231,9 @@ def p_statement_sub(p):
     p[0] = ("sub", p[1], p[3])
 
 def p_expression_function(p):
-    'expression : function NAME expression'
-    p[0] = ("function", p[2], p[3])
+    'expression : function NAME STARTARGS NAME ENDARGS expression'
+    #    0           1      2      3       4     5        6
+    p[0] = ("function", p[2], p[4], p[6])
 
 import ply.yacc as yacc
 yacc.yacc()
