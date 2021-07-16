@@ -150,9 +150,17 @@ class Interpreter:
     def perform_function(self, function_name, value):
         print(f"perform_function called on '{function_name}' with '{value}'")
         function = self.variable_value(function_name)
+        functions = []
+        for name in self.current_scope().names:
+            item = self.current_scope().names[name]
+            if type(item) == Function:
+                functions.append(item)
+        print(f"perform_function: copying in {len(functions)} from parent scope")
         self.push_scope()
         evaled_value = self.eval(value)
         self.assign_value(function.variable, evaled_value)
+        for f in functions:
+            self.assign_value(f.name, f)
         retval = self.eval(function.nodes)
         self.pop_scope()
         return retval
