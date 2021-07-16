@@ -129,8 +129,6 @@ class Interpreter:
 
     def push_scope(self):
         scope = Scope()
-        print("SCOPE")
-        print(scope)
         self.stack.append(scope)
 
     def current_scope(self):
