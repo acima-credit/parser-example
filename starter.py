@@ -122,15 +122,15 @@ class Interpreter:
         return value
 
     def expression_number(self, number):
-        return(number)
+        return number
 
     def variable_value(self, name):
         try:
             value = self.current_scope().names[name]
-            print(f'dictionary: {type(value)}')
+            print(f'variable_value: type is {type(value)}')
 
             if type(value) == int:
-                return(value)
+                return value
             else:
                 # value is a function
                 # - Create a new scope
@@ -154,15 +154,15 @@ class Interpreter:
         self.stack.append(scope)
 
     def current_scope(self):
-        return(self.stack[-1])
+        return self.stack[-1]
 
     def perform_operation(self, operator, a, b):
-        if operator == '+': return(a + b)
-        if operator == '-': return(a - b)
-        if operator == '*': return(a * b)
-        if operator == '/': return(a / b)
-        if operator == '^': return(a ** b)
-        if operator == '%': return(a % b)
+        if operator == '+': return a + b
+        if operator == '-': return a - b
+        if operator == '*': return a * b
+        if operator == '/': return a / b
+        if operator == '^': return a ** b
+        if operator == '%': return a % b
 
     def start_function(self, name, **parameter_list):
         pass
