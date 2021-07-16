@@ -110,24 +110,35 @@ class Interpreter:
     def get_value(self, name):
         try:
             value = self.current_scope().names[name]
+            print("VALUE") 
+            print(value)
             if type(value) == int:
                 return value
             else:
-                return self.eval(value)
+                self.push_scope()
+                for param in value[0]:
+                    self.assign_value(param, 1)
+                return self.eval(value[1])
+                # return_val = self.eval(value[1])
+                # self.pop_scope()
+                # return return_val
+                
         except LookupError:
             print(f"Undefined name {name}")
             return None
 
     def push_scope(self):
         scope = Scope()
+        print("SCOPE")
+        print(scope)
         self.stack.append(scope)
 
     def current_scope(self):
         return(self.stack[-1])
 
-    def store_function(self, function_name, param_name, expression):
+    def store_function(self, function_name, param_list, expression):
         scope = Scope()
-        self.current_scope().names[function_name] = expression
+        self.current_scope().names[function_name] = (param_list, expression)
         return function_name
 
     def add(self, x, y):
@@ -192,10 +203,11 @@ def p_param_list(p):
                    |
     '''
     if len(p) == 4:
-        p[0] = p[1] + [p[3]]
+        p[0] = [p[1]] + p[3]
     elif len(p) == 2:
         p[0] = [p[1]]
     else:
+        # Handle this differently - change function definition with an OR Clause on 194
         p[0] = []
 
 def p_parameter(p):
