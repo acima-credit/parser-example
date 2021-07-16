@@ -79,6 +79,14 @@ class Scope:
         self.loop_counter = 0
         self.loop_statements = []
 
+class Function:
+    def __init__(self, name, variable, nodes):
+        self.name = name
+        self.variable = variable
+        self.nodes = nodes
+
+
+
 class Interpreter:
     def __init__(self):
         self.stack = []
@@ -113,9 +121,13 @@ class Interpreter:
             print(f"Interpreter here, I am assigning your function {node[1]}")
             print(f"...with variable {node[2]}")
             # TODO: We need to store the arglist with with name, and/or identify this name as a function
-            return self.assign_value(node[1], node[3])
-        # elif operation == "binary_operation":
-        #     return self.perform_operation(node[1], self.eval(node[2]), self.eval(node[3]))
+            function = Function(node[1], node[2], node[3])
+            return self.assign_value(node[1], function)
+        elif operation == "call":
+            print(f"Interpreter: calling function {node[1]} with value {node[2]}")
+            function = self.variable_value(node[1])
+            print(f"Parser here, grabbing function '{node[1]}' and calling it with value {node[2]}")
+            return self.perform_function(function, node[2])
 
     def assign_value(self, name, value):
         self.current_scope().names[name] = value
@@ -125,33 +137,31 @@ class Interpreter:
         return number
 
     def variable_value(self, name):
+        print(f"variable_value: looking up var '{name}'")
         try:
             value = self.current_scope().names[name]
-            print(f'variable_value: type is {type(value)}')
+            print(f"valiable_value: '{name}' is {value}")
+            return value
 
-            if type(value) == int:
-                return value
-            else:
-                # value is a function
-                # - Create a new scope
-                # - Get the list of arguments from the function definition
-                # (which future us will have stored, right?)
-                # - Get the values passed into this call
-                # - Assign the values to the argument names in our new scope
-                # - eval the function body
-                #
-                # - Also, fun wrinkle: We need our new scope to recognize all
-                # the existing names in our outer scope. Maybe not? This sounds
-                # like a problem for Future Us. Maybe we have no scope leakage
-                # by design and call it a feature.
-                return self.eval(value)
         except LookupError:
             print(f"Undefined name {name}")
             return None
 
+    def perform_function(self, function, value):
+        print(f"perform_function called on '{function}' with '{value}'")
+        self.push_scope()
+        evaled_value = self.eval(value)
+        self.assign_value(function.variable, evaled_value)
+        retval = self.eval(function.nodes)
+        self.pop_scope()
+        return retval
+
     def push_scope(self):
         scope = Scope()
         self.stack.append(scope)
+
+    def pop_scope(self):
+        self.stack.pop()
 
     def current_scope(self):
         return self.stack[-1]
@@ -234,6 +244,10 @@ def p_expression_function(p):
     'expression : function NAME STARTARGS NAME ENDARGS expression'
     #    0           1      2      3       4     5        6
     p[0] = ("function", p[2], p[4], p[6])
+
+def p_call_function(p):
+    'expression : NAME STARTARGS expression ENDARGS'
+    p[0] = ("call", p[1], p[3])
 
 import ply.yacc as yacc
 yacc.yacc()
