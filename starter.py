@@ -19,7 +19,7 @@ tokens = keywords + (
     'EQUALS', 'ADD',
     'SUB', 'MULTIPLE',
     'DIVISION', 'LPAREN', 'RPAREN',  #, 'FOR', 'TO', 'RUN'
-    'STARTARGS', 'ENDARGS'
+    'STARTARGS', 'ENDARGS', 'COMMA'
     )
 
 # Tokens
@@ -34,6 +34,7 @@ t_RPAREN = r'\)'
 t_function    = r'function'
 t_STARTARGS = r'\['
 t_ENDARGS = r']'
+t_COMMA = r','
 # t_FOR = r'for'
 # t_TO  = r'to'
 # t_RUN = r'run'
@@ -79,6 +80,15 @@ class Scope:
         self.loop_counter = 0
         self.loop_statements = []
 
+class Function:
+    def __init__(self, name, variable, nodes):
+        self.name = name
+        self.variable = variable
+        self.nodes = nodes
+
+    def __str__(self):
+        return f"<Function '#{self.name}' taking 1 variable '{self.variable}', nodes='{self.nodes}'>"
+
 class Interpreter:
     def __init__(self):
         self.stack = []
@@ -114,8 +124,8 @@ class Interpreter:
             print(f"...with variable {node[2]}")
             # TODO: We need to store the arglist with with name, and/or identify this name as a function
             return self.assign_value(node[1], node[3])
-        # elif operation == "binary_operation":
-        #     return self.perform_operation(node[1], self.eval(node[2]), self.eval(node[3]))
+        else:
+            print(f"I don't know how to do operation {node[0]}!")
 
     def assign_value(self, name, value):
         self.current_scope().names[name] = value
@@ -230,10 +240,41 @@ def p_statement_sub(p):
     'expression : expression SUB expression'
     p[0] = ("sub", p[1], p[3])
 
+def dump_p(list):
+    for i in range(len(list)):
+        print(f"{i}: {list[i]}")
+
+def p_arglist(p):
+    '''
+arglist : NAME
+        | NAME COMMA arglist
+'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        # p[0] = [x for x in p[1:] if x != ","]
+        # p[0] = p[1] + [x for x in p[1:] if "," not in x]
+        # p[0] = list(filter((',').__ne__, p))
+        p[0] = [p[1]] + p[3]
+
+def p_expression_list(p):
+    '''
+expressionlist : expression
+               | expression COMMA expressionlist
+'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
 def p_expression_function(p):
-    'expression : function NAME STARTARGS NAME ENDARGS expression'
-    #    0           1      2      3       4     5        6
+    'expression : function NAME STARTARGS arglist ENDARGS expression'
     p[0] = ("function", p[2], p[4], p[6])
+
+
+def p_call_function(p):
+    'expression : NAME STARTARGS expressionlist ENDARGS'
+    p[0] = ("call", p[1], p[3])
 
 import ply.yacc as yacc
 yacc.yacc()
