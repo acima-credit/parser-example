@@ -85,6 +85,8 @@ class Function:
         self.variable = variable
         self.nodes = nodes
 
+    def __str__(self):
+        return f"<Function '#{self.name}' taking 1 variable '{self.variable}', nodes='{self.nodes}'>"
 
 
 class Interpreter:
@@ -125,9 +127,7 @@ class Interpreter:
             return self.assign_value(node[1], function)
         elif operation == "call":
             print(f"Interpreter: calling function {node[1]} with value {node[2]}")
-            function = self.variable_value(node[1])
-            print(f"Parser here, grabbing function '{node[1]}' and calling it with value {node[2]}")
-            return self.perform_function(function, node[2])
+            return self.perform_function(node[1], node[2])
 
     def assign_value(self, name, value):
         self.current_scope().names[name] = value
@@ -147,8 +147,9 @@ class Interpreter:
             print(f"Undefined name {name}")
             return None
 
-    def perform_function(self, function, value):
-        print(f"perform_function called on '{function}' with '{value}'")
+    def perform_function(self, function_name, value):
+        print(f"perform_function called on '{function_name}' with '{value}'")
+        function = self.variable_value(function_name)
         self.push_scope()
         evaled_value = self.eval(value)
         self.assign_value(function.variable, evaled_value)
