@@ -81,13 +81,13 @@ class Scope:
         self.loop_statements = []
 
 class Function:
-    def __init__(self, name, variable, nodes):
+    def __init__(self, name, variables, nodes):
         self.name = name
-        self.variable = variable
+        self.variables = variables
         self.nodes = nodes
 
     def __str__(self):
-        return f"<Function '#{self.name}' taking 1 variable '{self.variable}', nodes='{self.nodes}'>"
+        return f"<Function '#{self.name}' taking {len(self.variables)} variables '{self.variables}', nodes='{self.nodes}'>"
 
 class Interpreter:
     def __init__(self):
