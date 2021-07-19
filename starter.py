@@ -19,6 +19,7 @@ tokens = (
     'MODULO',
     'LPAREN',
     'RPAREN',
+    'PERIOD',
     'COMMA'
     )
 
@@ -34,6 +35,7 @@ t_EXPONENTIATION = r'\^'
 t_MODULO         = r'[%]'
 t_LPAREN         = r'[(]'
 t_RPAREN         = r'[)]'
+t_PERIOD         = r'[.]'
 t_COMMA          = r'[,]'
 
 def t_NUMBER(t):
@@ -87,6 +89,8 @@ class Interpreter:
             return self.get_value(node[1])
         elif operation == 'function':
             return self.store_function(node[1], node[2], node[3])
+        elif operation == 'function_call':
+            return self.call_function(node[1], node[2])
         elif operation == "add":
             return self.add(self.eval(node[1]), self.eval(node[2]))
         elif operation == 'subtract':
@@ -134,10 +138,13 @@ class Interpreter:
     def current_scope(self):
         return(self.stack[-1])
 
-    def store_function(self, function_name, param_list, expression):
+    def store_function(self, function_name, parameter_list, expression):
         scope = Scope()
-        self.current_scope().names[function_name] = (param_list, expression)
+        self.current_scope().names[function_name] = (parameter_list, expression)
         return function_name
+
+    def call_function(self, function_name, expression_list):
+        print(function_name, p_parameter_list)
 
     def add(self, x, y):
         return x + y
@@ -191,30 +198,50 @@ def p_expression_parentheses(p):
     p[0] = ('eval', p[2])
 
 def p_function(p):
-    'expression : NAME LPAREN param_list RPAREN FUNCTION expression'
-    p[0] = ('function', p[1], p[3], p[6])
+    '''
+        expression : NAME LPAREN parameter_list RPAREN FUNCTION expression
+                   | NAME LPAREN RPAREN FUNCTION expression
+    '''
+    if len(p) == 7:
+        p[0] = ('function', p[1], p[3], p[6])
+    else:
+        p[0] = ('function', p[1], [], p[5])
 
-def p_param_list(p):
+def p_parameter_list(p):
     '''
-        param_list : parameter
-                   | parameter COMMA param_list
-                   |
+        parameter_list : parameter
+                       | parameter PERIOD parameter_list
     '''
-    if len(p) == 4:
-        p[0] = [p[1]] + p[3]
-    elif len(p) == 2:
+    if len(p) == 2:
+        # single parameter
         p[0] = [p[1]]
     else:
-        # Handle this differently - change function definition with an OR Clause on 194
-        p[0] = []
+        # multiple parameters
+        p[0] = [p[1]] + p[3]
+
+def p_expression_list(p):
+    '''
+        expression_list : expression
+                        | expression COMMA expression_list
+    '''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+def p_function_call(p):
+    '''
+        expression : NAME LPAREN RPAREN
+                   | NAME LPAREN expression_list RPAREN
+    '''
+    if len(p) == 2:
+        p[0] = ('function_call', p[1], [])
+    else:
+        p[0] = ('function_call', p[1], p[3])
 
 def p_parameter(p):
     'parameter : NAME'
     p[0] = p[1]
-
-# def p_function_call(p):
-#     'expression : NAME LPAREN NUMBER RPAREN'
-#     # apple(5)
 
 def p_expression_addition(p):
     'expression : expression ADDITION expression'
