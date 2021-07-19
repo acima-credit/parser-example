@@ -123,7 +123,19 @@ class Interpreter:
             print(f"Interpreter here, I am assigning your function {node[1]}")
             print(f"...with variable {node[2]}")
             # TODO: We need to store the arglist with with name, and/or identify this name as a function
-            return self.assign_value(node[1], node[3])
+
+            return self.assign_value(node[1], [node[2], node[3]])
+        elif operation == "call":
+            print(f"Trying to call a {node[1]} with variables: {node[2]}")
+            current_functio = self.current_scope().names[node[1]]
+            # TODO: evaluate all parameters in function scope
+            variable_value = self.eval(node[2][0])
+            self.push_scope()
+            # TODO: assign all variable values for the function 
+            self.assign_value(current_functio[0][0], variable_value)
+            return_value = self.eval(current_functio[1])
+            self.pop_scope()
+            return return_value
         else:
             print(f"I don't know how to do operation {node[0]}!")
 
@@ -162,6 +174,9 @@ class Interpreter:
     def push_scope(self):
         scope = Scope()
         self.stack.append(scope)
+
+    def pop_scope(self):
+        self.stack.pop()
 
     def current_scope(self):
         return self.stack[-1]
