@@ -126,16 +126,23 @@ class Interpreter:
 
             return self.assign_value(node[1], [node[2], node[3]])
         elif operation == "call":
+            variable_values = []
+            previous_scope = self.current_scope()
             print(f"Trying to call a {node[1]} with variables: {node[2]}")
             current_functio = self.current_scope().names[node[1]]
-            # TODO: evaluate all parameters in function scope
-            variable_value = self.eval(node[2][0])
-            self.push_scope()
-            # TODO: assign all variable values for the function 
-            self.assign_value(current_functio[0][0], variable_value)
-            return_value = self.eval(current_functio[1])
-            self.pop_scope()
-            return return_value
+            for item in node[2]:
+                variable_values.append(self.eval(item))
+            if self.push_scope():
+                for index, item in enumerate(variable_values):
+                    self.assign_value(current_functio[0][index], item)
+                for name, item in previous_scope.names.items():
+                    if type(item) == list:
+                        self.assign_value(name, item)
+                return_value = self.eval(current_functio[1])
+                self.pop_scope()
+                return return_value
+            else:
+                return -7
         else:
             print(f"I don't know how to do operation {node[0]}!")
 
@@ -172,8 +179,13 @@ class Interpreter:
             return None
 
     def push_scope(self):
-        scope = Scope()
-        self.stack.append(scope)
+        if len(self.stack) < 10:
+            scope = Scope()
+            self.stack.append(scope)
+            return True
+        else:
+            print("Stack Overflowed.... but were cool. But this is not the right answer")
+            return False
 
     def pop_scope(self):
         self.stack.pop()
