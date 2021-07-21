@@ -66,15 +66,15 @@ precedence = (
 )
 
 class Scope:
-    def __init__(self):
-        self.names = {}
+    def __init__(self, names={}):
+        self.names = names
         self.loop_counter = 0
         self.loop_statements = []
 
 class Interpreter:
     def __init__(self):
         self.stack = []
-        self.push_scope()
+        self.push_scope(names={})
 
     def eval(self, node):
         operation = node[0]
@@ -86,7 +86,7 @@ class Interpreter:
         elif operation == "number":
             return node[1]
         elif operation == "lookup":
-            return self.get_value(node[1])
+            return self.get_value(node[1], node[2])
         elif operation == 'function':
             return self.store_function(node[1], node[2], node[3])
         elif operation == 'function_call':
@@ -111,40 +111,38 @@ class Interpreter:
     def expression_number(self, number):
         return(number)
 
-    def get_value(self, name):
+    def get_value(self, name, parameters):
         try:
             value = self.current_scope().names[name]
-            print("VALUE") 
-            print(value)
             if type(value) == int:
                 return value
             else:
-                self.push_scope()
-                for param in value[0]:
-                    self.assign_value(param, 1)
-                return self.eval(value[1])
-                # return_val = self.eval(value[1])
-                # self.pop_scope()
-                # return return_val
-                
+                # value[0] parameter names
+                # value[1] function expression
+                self.push_scope(names=self.current_scope().names.copy())
+                for index, param in enumerate(value[0]):
+                    self.assign_value(param, self.eval(parameters[index]))
+                return_val = self.eval(value[1])
+                self.pop_scope()
+                return return_val
+
         except LookupError:
             print(f"Undefined name {name}")
             return None
 
-    def push_scope(self):
-        scope = Scope()
+    def push_scope(self, names):
+        scope = Scope(names=names)
         self.stack.append(scope)
+
+    def pop_scope(self):
+        self.stack.pop()
 
     def current_scope(self):
         return(self.stack[-1])
 
     def store_function(self, function_name, parameter_list, expression):
-        scope = Scope()
         self.current_scope().names[function_name] = (parameter_list, expression)
         return function_name
-
-    def call_function(self, function_name, expression_list):
-        print(function_name, p_parameter_list)
 
     def add(self, x, y):
         return x + y
@@ -185,7 +183,7 @@ def p_expression_name(p):
     'expression : NAME'
     if p[1] == 'q' or p[1] == 'quit' or p[1] == 'exit': quit()
     try:
-        p[0] = ('lookup', p[1])
+        p[0] = ('lookup', p[1], [])
     except LookupError:
         print(f"Undefined name {p[1]!r}")
         p[0] = 0
@@ -235,9 +233,9 @@ def p_function_call(p):
                    | NAME LPAREN expression_list RPAREN
     '''
     if len(p) == 2:
-        p[0] = ('function_call', p[1], [])
+        p[0] = ('lookup', p[1], [])
     else:
-        p[0] = ('function_call', p[1], p[3])
+        p[0] = ('lookup', p[1], p[3])
 
 def p_parameter(p):
     'parameter : NAME'
